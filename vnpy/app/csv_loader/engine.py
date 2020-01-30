@@ -21,6 +21,7 @@ Sample csv file:
 """
 
 import csv
+import pandas as pd
 from datetime import datetime
 from typing import TextIO
 
@@ -48,6 +49,9 @@ class CsvLoaderEngine(BaseEngine):
         self.datetime_head: str = ""
         self.open_head: str = ""
         self.close_head: str = ""
+        self.close_bid_head: str = ""
+        self.close_ask_head: str = ""
+        self.low_head: str = ""
         self.low_head: str = ""
         self.high_head: str = ""
         self.volume_head: str = ""
@@ -63,6 +67,8 @@ class CsvLoaderEngine(BaseEngine):
         high_head: str,
         low_head: str,
         close_head: str,
+        close_bid_head: str,
+        close_ask_head: str,
         volume_head: str,
         datetime_format: str,
     ):
@@ -76,6 +82,7 @@ class CsvLoaderEngine(BaseEngine):
         count = 0
         for item in reader:
             if datetime_format:
+                # dt = pd.to_datetime(item[datetime_head], format=datetime_format)
                 dt = datetime.strptime(item[datetime_head], datetime_format)
             else:
                 dt = datetime.fromisoformat(item[datetime_head])
@@ -90,6 +97,8 @@ class CsvLoaderEngine(BaseEngine):
                 high_price=item[high_head],
                 low_price=item[low_head],
                 close_price=item[close_head],
+                close_bid_price=item[close_bid_head],
+                close_ask_price=item[close_ask_head],
                 gateway_name="DB",
             )
 
@@ -116,6 +125,8 @@ class CsvLoaderEngine(BaseEngine):
         high_head: str,
         low_head: str,
         close_head: str,
+        close_bid_head: str,
+        close_ask_head: str,
         volume_head: str,
         datetime_format: str,
     ):
@@ -135,4 +146,6 @@ class CsvLoaderEngine(BaseEngine):
                 close_head=close_head,
                 volume_head=volume_head,
                 datetime_format=datetime_format,
+                close_bid_head=close_bid_head,
+                close_ask_head=close_ask_head,
             )

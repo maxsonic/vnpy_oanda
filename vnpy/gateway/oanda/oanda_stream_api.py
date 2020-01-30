@@ -84,6 +84,7 @@ class OandaStreamApi(OandaApiBase):
 
     def subscribe(self, req: SubscribeRequest):
         # noinspection PyTypeChecker
+        print("sonic", self.gateway.account_id)
         self.add_streaming_request(
             "GET",
             f"/v3/accounts/{self.gateway.account_id}/pricing/stream?instruments={req.symbol}",
@@ -104,6 +105,7 @@ class OandaStreamApi(OandaApiBase):
                 exchange=Exchange.OANDA,
                 datetime=parse_datetime(data['time']),
                 name=symbol,
+                last_price=(float(bid['price'])+float(ask['price'])) / 2,
                 bid_price_1=float(bid['price']),
                 bid_volume_1=bid['liquidity'],
                 ask_price_1=float(ask['price']),

@@ -62,7 +62,7 @@ class OandaGateway(BaseGateway):
         server = setting["服务器"]
         proxy_host = setting["代理地址"]
         proxy_port = setting["代理端口"]
-
+        print("connect")
         if proxy_port.isdigit():
             proxy_port = int(proxy_port)
         else:

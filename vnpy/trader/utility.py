@@ -210,12 +210,16 @@ class BarGenerator:
                 high_price=tick.last_price,
                 low_price=tick.last_price,
                 close_price=tick.last_price,
+                close_ask_price=tick.last_price,
+                close_bid_price=tick.last_price,
                 open_interest=tick.open_interest
             )
         else:
             self.bar.high_price = max(self.bar.high_price, tick.last_price)
             self.bar.low_price = min(self.bar.low_price, tick.last_price)
             self.bar.close_price = tick.last_price
+            self.bar.close_bid_price = tick.bid_price_1
+            self.bar.close_ask_price = tick.ask_price_1
             self.bar.open_interest = tick.open_interest
             self.bar.datetime = tick.datetime
 
@@ -255,6 +259,8 @@ class BarGenerator:
 
         # Update close price/volume into window bar
         self.window_bar.close_price = bar.close_price
+        self.window_bar.close_bid_price = bar.close_bid_price
+        self.window_bar.close_ask_price = bar.close_ask_price
         self.window_bar.volume += int(bar.volume)
         self.window_bar.open_interest = bar.open_interest
 
@@ -723,6 +729,369 @@ class ArrayManager(object):
         if array:
             return result
         return result[-1]
+
+    def new_boll(self, n, dev, array=False):
+        """布林通道"""
+        mid = self.sma(n, array)
+        std = self.std(n, array)
+        
+        up = mid + std * dev
+        b1 = 4 * std / mid
+        b2 = (self.close[-1] - mid + 2 * std) / (4 * std)
+        down = mid - std * dev
+        
+        return up, down, b1, b2   
+    
+    def bollingerb2(self, n, array=False):
+        return self.new_boll(n, 2)[-1]
+
+    def bollingerb(self, n, array=False):
+        return self.new_boll(n, 2)[-2]
+
+    def aroonosc(self, n, array=False):
+        high = self.high
+        low = self.low
+        real = talib.AROONOSC(high, low, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def bop(self, n, array=False):
+        high = self.high
+        low = self.low
+        open_ = self.open
+        close = self.close
+        real = talib.BOP(open_, high, low, close)
+        if array:
+            return real
+        return real[-1]
+
+    def cmo(self, n, array=False):
+        close = self.close
+        real = talib.CMO(close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def dx(self, n, array=False):
+        high = self.high
+        low = self.low
+        open_ = self.open
+        close = self.close
+        real = talib.DX(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def minusdi(self, n, array=False):
+        high = self.high
+        low = self.low
+        close = self.close
+        real = talib.MINUS_DI(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def minusdm(self, n, array=False):
+        high = self.high
+        low = self.low
+        real = talib.MINUS_DM(high, low, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def mom(self, n, array=False):
+        close = self.close
+        real = talib.MOM(close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def plusdi(self, n, array=False):
+        high = self.high
+        low = self.low
+        close = self.close
+        real = talib.PLUS_DI(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def plusdm(self, n, array=False):
+        high = self.high
+        low = self.low
+        real = talib.PLUS_DM(high, low, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def rocp(self, n, array=False):
+        real = talib.ROCP(self.close, timeperiod=n)
+        return real[-1]
+
+    def rocr(self, n, array=False):
+        real = talib.ROCR(self.close, timeperiod=n)
+        return real[-1]
+
+    def rocr100(self, n, array=False):
+        real = talib.ROCR100(self.close, timeperiod=n)
+        return real[-1]
+
+    def natr(self, n, array=False):
+        real = talib.NATR(self.close, timeperiod=n)
+        return real[-1]
+
+    def trix(self, n, array=False):
+        #print("trix", n, self.close)
+        trix = talib.TRIX(self.close, timeperiod=n)
+        return trix[-1]
+
+    def roc(self, n, array=False):
+        roc = talib.ROC(self.close, timeperiod=n)
+        if array:
+            return roc
+        return roc[-1]
+
+    def willr(self, n, array=False):
+        high = self.high
+        low = self.low
+        close = self.close
+        real = talib.WILLR(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def adx(self, n, array=False):
+        high = self.high
+        low = self.low
+        close = self.close
+        real = talib.ADX(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def macd(self, n, array=False):
+        close = self.close
+        real, _, _ = talib.MACDFIX(close, signalperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def macdhist(self, n, array=False):
+        close = self.close
+        _, _, real = talib.MACDFIX(close, signalperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def macdsignal(self, n, array=False):
+        close = self.close
+        _, real, _ = talib.MACDFIX(close, signalperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def adxr(self, n, array=False):
+        high = self.high
+        low = self.low
+        close = self.close
+        real = talib.ADXR(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def mfi(self, n, array=False):
+        """Calculate Money Flow Index and Ratio for given data.
+        """
+        high = self.high
+        low = self.low
+        volume = self.volume
+        close = self.close
+        real = talib.MFI(high, low, close, volume, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def cci(self, n, array=False):
+        """Calculate Commodity Channel Index for given data.
+        """
+        high = self.high
+        low = self.low
+        volume = self.volume
+        close = self.close
+        real = talib.CCI(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def natr(self, n, array=False):
+        high = self.high
+        low = self.low
+        close = self.close
+        real = talib.NATR(high, low, close, timeperiod=n)
+        if array:
+            return real
+        return real[-1]
+
+    def ad(self, n, array=False):
+        high = self.high
+        low = self.low
+        volume = self.volume
+        close = self.close
+        real = talib.AD(high, low, close, volume)
+        if array:
+            return real
+        return real[-1]
+
+    def obv(self, n, array=False):
+        volume = self.volume
+        close = self.close
+        real = talib.OBV(close, volume)
+        if array:
+            return real
+        return real[-1]
+
+    def stochastic_oscillator(self, n, array=False):
+        """Calculate stochastic oscillator %D for given data.
+        :param df: pandas.DataFrame
+        :param n: 
+        :return: pandas.DataFrame
+        """
+        df = pd.DataFrame()
+        df['Close'] = pd.Series(self.close)
+        df['Low'] = pd.Series(self.low)
+        df['High'] = pd.Series(self.high)
+        SOk = pd.Series((df['Close'] - df['Low']) / (df['High'] - df['Low']),
+                         name='SOk')
+        SOd = pd.Series(SOk.ewm(span=n, min_periods=n).mean(), name='SOd')
+        df = df.join(SOd)
+        df = df.join(SOk)
+        return df['SOk'].values[-1], df['SOd'].values[-1]
+    
+    #----------------------------------------------------------------------
+    def keltner(self, n, dev, array=False):
+        """肯特纳通道"""
+        mid = self.sma(n, array)
+        atr = self.atr(n, array)
+        
+        up = mid + atr * dev
+        down = mid - atr * dev
+        
+        return up, down
+    
+    #----------------------------------------------------------------------
+    def donchian(self, n, array=False):
+        """唐奇安通道"""
+        up = talib.MAX(self.high, n)
+        down = talib.MIN(self.low, n)
+        
+        if array:
+            return up, down
+        return up[-1], down[-1]
+
+    def apo(self, n, array=False):
+        real = talib.APO(self.close, fastperiod=n, slowperiod=n*2, matype=0)
+        return real[-1]
+    
+    def ppo(self, n, array=False):
+        real = talib.PPO(self.close, fastperiod=n, slowperiod=n*2, matype=0)
+        return real[-1]
+    
+    def ultosc(self, n, array=False):
+        real = talib.ULTOSC(self.high, self.low, self.close, timeperiod1=n, timeperiod2=n*2, timeperiod3=n*3)
+        return real[-1]
+    
+    def aroonup(self, n, array=False):
+        down, up = talib.AROON(self.high, self.low, timeperiod=n)
+        return up[-1]
+    
+    def aroondown(self, n, array=False):
+        down, up = talib.AROON(self.high, self.low, timeperiod=n)
+        return down[-1]
+    
+    def macd2(self, n, array=False):
+        macd, macdsignal, macdhist = talib.MACD(self.close, fastperiod=2*n, slowperiod=3*n, signalperiod=int(1.5*n))
+        return macd[-1]
+    
+    def macd2signal(self, n, array=False):
+        macd, macdsignal, macdhist = talib.MACD(self.close, fastperiod=2*n, slowperiod=3*n, signalperiod=int(1.5*n))
+        return macdsignal[-1]
+    
+    def macd2hist(self, n, array=False):
+        macd, macdsignal, macdhist = talib.MACD(self.close, fastperiod=2*n, slowperiod=3*n, signalperiod=int(1.5*n))
+        return macdhist[-1]
+    
+    def stochrsifastk(self, n, array=False):
+        fastk, fastd = talib.STOCHRSI(self.close, timeperiod=3*n, fastk_period=2*n, fastd_period=n, fastd_matype=0)
+        return fastk[-1]
+    
+    def stochrsifastd(self, n, array=False):
+        fastk, fastd = talib.STOCHRSI(self.close, timeperiod=3*n, fastk_period=2*n, fastd_period=n, fastd_matype=0)
+        return fastd[-1]
+    
+    def adosc(self, n, array=False):
+        real = talib.ADOSC(self.high, self.low, self.close, self.volume, fastperiod=n, slowperiod=3*n)
+        return real[-1]
+    
+    def htdcperiod(self, n, array=False):
+        real = talib.HT_DCPERIOD(self.close)
+        return real[-1]
+    
+    def htdcphase(self, n, array=False):
+        real = talib.HT_DCPHASE(self.close)
+        return real[-1]
+    
+    def htphasor(self, n, array=False):
+        real = talib.HT_PHASOR(self.close)
+        return real[-1]
+    
+    def htsine(self, n, array=False):
+        sine, leadsine = talib.HT_SINE(self.close)
+        return sine[-1]
+    
+    def htleadsine(self, n, array=False):
+        sine, leadsine = talib.HT_SINE(self.close)
+        return leadsine[-1]
+    
+    def httrendmode(self, n, array=False):
+        real = talib.HT_TRENDMODE(self.close)
+        return real[-1]
+    
+    def beta(self, n, array=False):
+        real = talib.BETA(self.high, self.low, timeperiod=n)
+        return real[-1]
+    
+    def correl(self, n, array=False):
+        real = talib.CORREL(self.high, self.low, timeperiod=n)
+        return real[-1]
+    
+    def linearreg(self, n, array=False):
+        real = talib.LINEARREG(self.close, timeperiod=n)
+        return real[-1]
+    
+    def linearregangle(self, n, array=False):
+        real = talib.LINEARREG_ANGLE(self.close, timeperiod=n)
+        return real[-1]
+    
+    def linearregintercept(self, n, array=False):
+        real = talib.LINEARREG_INTERCEPT(self.close, timeperiod=n)
+        return real[-1]
+    
+    def linearregslope(self, n, array=False):
+        real = talib.LINEARREG_SLOPE(self.close, timeperiod=n)
+        return real[-1]
+    
+    def stddev(self, n, array=False):
+        real = talib.STDDEV(self.close, timeperiod=n, nbdev=1)
+        return real[-1]
+    
+    def tsf(self, n, array=False):
+        real = talib.TSF(self.close, timeperiod=n)
+        return real[-1]
+    
+    def var(self, n, array=False):
+        real = talib.VAR(self.close, timeperiod=n, nbdev=1)
+        return real[-1]
+    
 
 
 def virtual(func: "callable"):

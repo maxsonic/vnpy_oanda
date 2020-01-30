@@ -22,9 +22,6 @@ class RequestStatus(Enum):
     failed = 2  # Request failed (status code not 2xx)
     error = 3  # Exception raised
 
-
-pool: multiprocessing.pool.Pool = Pool(os.cpu_count() * 20)
-
 CALLBACK_TYPE = Callable[[dict, "Request"], Any]
 ON_FAILED_TYPE = Callable[[int, "Request"], Any]
 ON_ERROR_TYPE = Callable[[Type, Exception, TracebackType, "Request"], Any]
@@ -146,6 +143,8 @@ class RestClient(object):
         self._streams_lock = Lock()
         self._streams: List[Thread] = []
 
+        self.pool: multiprocessing.pool.Pool = Pool(20)
+
     @property
     def alive(self):
         return self._active
@@ -197,7 +196,7 @@ class RestClient(object):
         Wait till all requests are processed.
         """
         for task in self._tasks:
-            task.wait()
+            task.wait(10)
 
     def add_streaming_request(
         self,
@@ -275,11 +274,11 @@ class RestClient(object):
             extra=extra,
             client=self,
         )
-        task = pool.apply_async(
+        task = self.pool.apply_async(
             self._process_request,
             args=[request, ],
             callback=self._clean_finished_tasks,
-            # error_callback=lambda e: self.on_error(type(e), e, e.__traceback__, request),
+            error_callback=lambda e: self.on_error(type(e), e, e.__traceback__, request),
         )
         self._push_task(task)
         return request
@@ -377,6 +376,7 @@ class RestClient(object):
         """
         Sending request to server and get result.
         """
+
         try:
             with self._get_session() as session:
                 request = self.sign(request)

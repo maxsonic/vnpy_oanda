@@ -12,7 +12,7 @@ from threading import Thread
 from typing import Any, Sequence, Type
 
 from vnpy.event import Event, EventEngine
-from .app import BaseApp
+from vnpy.trader.app import BaseApp
 from .event import (
     EVENT_TICK,
     EVENT_ORDER,

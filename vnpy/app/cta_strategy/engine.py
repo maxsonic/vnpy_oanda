@@ -751,8 +751,7 @@ class CtaEngine(BaseEngine):
         path1 = Path(__file__).parent.joinpath("strategies")
         self.load_strategy_class_from_folder(
             path1, "vnpy.app.cta_strategy.strategies")
-
-        path2 = Path.cwd().joinpath("strategies")
+        path2 = os.path.join(os.getcwd(), "strategies")
         self.load_strategy_class_from_folder(path2, "strategies")
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
@@ -850,6 +849,7 @@ class CtaEngine(BaseEngine):
         Load setting file.
         """
         self.strategy_setting = load_json(self.setting_filename)
+        print(self.strategy_setting)
 
         for strategy_name, strategy_config in self.strategy_setting.items():
             self.add_strategy(

@@ -47,7 +47,7 @@ class OandaRestApi(OandaApiBase):
 
     def __init__(self, gateway: "OandaGateway"):
         """"""
-        super().__init__(gateway)
+        super(OandaRestApi, self).__init__(gateway)
 
         self.order_count = 1_000_000
         self.order_count_lock = Lock()
@@ -171,7 +171,7 @@ class OandaRestApi(OandaApiBase):
             "GET",
             f"/v3/instruments/{symbol}/candles",
             params={
-                # "price": "M",  # M for mids, B for bids, A for asks
+                "price": "MAB",  # M for mids, B for bids, A for asks
                 "granularity": INTERVAL_VT2OANDA[interval],
                 "count": 5000,
                 "from": start.isoformat(),
@@ -200,6 +200,8 @@ class OandaRestApi(OandaApiBase):
                 high_price=float(bar_data["h"]),
                 low_price=float(bar_data["l"]),
                 close_price=float(bar_data["c"]),
+                close_bid_price=float(data["bid"]["c"]),
+                close_ask_price=float(data["ask"]["c"]),
                 gateway_name=self.gateway_name
             )
             bars.append(bar)
@@ -444,6 +446,7 @@ class OandaRestApi(OandaApiBase):
                 name=symbol,
                 product=Product.FOREX,
                 size=1,
+                history_data=True,
                 pricetick=1.0 / pow(10, ins['displayPrecision']),
             )
             self.gateway.on_contract(contract)

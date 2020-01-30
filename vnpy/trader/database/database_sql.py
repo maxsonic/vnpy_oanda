@@ -81,6 +81,8 @@ def init_models(db: Database, driver: Driver):
         high_price: float = FloatField()
         low_price: float = FloatField()
         close_price: float = FloatField()
+        close_bid_price: float = FloatField()
+        close_ask_price: float = FloatField()
 
         class Meta:
             database = db
@@ -103,6 +105,8 @@ def init_models(db: Database, driver: Driver):
             db_bar.high_price = bar.high_price
             db_bar.low_price = bar.low_price
             db_bar.close_price = bar.close_price
+            db_bar.close_bid_price = bar.close_ask_price
+            db_bar.close_ask_price = bar.close_bid_price
 
             return db_bar
 
@@ -121,6 +125,8 @@ def init_models(db: Database, driver: Driver):
                 open_interest=self.open_interest,
                 low_price=self.low_price,
                 close_price=self.close_price,
+                close_ask_price=self.close_ask_price,
+                close_bid_price=self.close_bid_price,
                 gateway_name="DB",
             )
             return bar
