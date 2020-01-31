@@ -40,6 +40,7 @@ class StopOrder:
     lock: bool = False
     vt_orderids: list = field(default_factory=list)
     status: StopOrderStatus = StopOrderStatus.WAITING
+    account_id: str = ""
 
 
 EVENT_CTA_LOG = "eCtaLog"

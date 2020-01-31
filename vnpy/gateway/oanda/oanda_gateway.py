@@ -178,6 +178,7 @@ class OandaGateway(BaseGateway):
         return super().write_log(msg)
 
     def parse_order_data(self, data, status: Status, time_key: str):
+        print(data)
         client_extension = data.get('clientExtensions', None)
         if client_extension is None:
             order_id = data['id']
@@ -199,6 +200,7 @@ class OandaGateway(BaseGateway):
             # status=STATUS_OANDA2VT[data['state']],
             status=status,
             time=parse_time(data[time_key]),
+            account_id=""
         )
         self.orders[order_id] = order
         return order

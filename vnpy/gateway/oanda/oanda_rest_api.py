@@ -102,7 +102,7 @@ class OandaRestApi(OandaApiBase):
         """"""
         req.offset = Offset.NONE
         order_id = self._new_order_id()
-
+        account_id = req.account_id
         symbol = req.symbol
         vol = int(req.volume)
         direction = req.direction
@@ -115,7 +115,7 @@ class OandaRestApi(OandaApiBase):
             }
         }
 
-        order = req.create_order_data(order_id, self.gateway_name)
+        order = req.create_order_data(order_id, self.gateway_name, account_id=account_id)
         order.time = parse_time(datetime.now().isoformat())
 
         # Only add price for limit order.
@@ -124,7 +124,7 @@ class OandaRestApi(OandaApiBase):
         self.gateway.orders[order.orderid] = order
         self.add_request(
             "POST",
-            f"/v3/accounts/{self.gateway.account_id}/orders",
+            f"/v3/accounts/{account_id}/orders",
             callback=self.on_send_order,
             data={'order': data},
             extra=order,
@@ -137,13 +137,14 @@ class OandaRestApi(OandaApiBase):
     def cancel_order(self, req: CancelRequest):
         """"""
         order_id = req.orderid
+        account_id = req.account_id
         order = self.gateway.orders[order_id]
 
         if self.is_local_order_id(order_id):
             order_id = '@' + order_id
         self.add_request(
             "PUT",
-            f"/v3/accounts/{self.gateway.account_id}/orders/{order_id}/cancel",
+            f"/v3/accounts/{account_id}/orders/{order_id}/cancel",
             callback=self.on_cancel_order,
             extra=order,
         )
@@ -373,6 +374,7 @@ class OandaRestApi(OandaApiBase):
 
     def on_query_orders(self, raw_data: dict, request: "Request"):
         for data in raw_data['orders']:
+            print(data)
             order = self.gateway.parse_order_data(data,
                                                   STATUS_OANDA2VT[data['state']],
                                                   'createTime')

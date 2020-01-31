@@ -1,6 +1,7 @@
 """"""
 
 import importlib
+import time
 import os
 import traceback
 from collections import defaultdict
@@ -266,7 +267,8 @@ class CtaEngine(BaseEngine):
                     stop_order.offset,
                     price,
                     stop_order.volume,
-                    stop_order.lock
+                    stop_order.lock,
+                    stop_order.account_id
                 )
 
                 # Update stop order status if placed successfully
@@ -296,13 +298,15 @@ class CtaEngine(BaseEngine):
         price: float,
         volume: float,
         type: OrderType,
-        lock: bool
+        lock: bool,
+        account_id: str = ""
     ):
         """
         Send a new order to server.
         """
         # Create request and send order.
         original_req = OrderRequest(
+            account_id=account_id,
             symbol=contract.symbol,
             exchange=contract.exchange,
             direction=direction,
@@ -344,7 +348,8 @@ class CtaEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
+        account_id: str = ""
     ):
         """
         Send a limit order to server.
@@ -357,7 +362,8 @@ class CtaEngine(BaseEngine):
             price,
             volume,
             OrderType.LIMIT,
-            lock
+            lock,
+            account_id
         )
 
     def send_server_stop_order(
@@ -368,7 +374,8 @@ class CtaEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
+        account_id: str = ""
     ):
         """
         Send a stop order to server.
@@ -384,7 +391,8 @@ class CtaEngine(BaseEngine):
             price,
             volume,
             OrderType.STOP,
-            lock
+            lock,
+            account_id
         )
 
     def send_local_stop_order(
@@ -394,7 +402,8 @@ class CtaEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
+        account_id: str = ""
     ):
         """
         Create a new local stop order.
@@ -410,7 +419,8 @@ class CtaEngine(BaseEngine):
             volume=volume,
             stop_orderid=stop_orderid,
             strategy_name=strategy.strategy_name,
-            lock=lock
+            lock=lock,
+            account_id=account_id
         )
 
         self.stop_orders[stop_orderid] = stop_order
@@ -465,7 +475,8 @@ class CtaEngine(BaseEngine):
         price: float,
         volume: float,
         stop: bool,
-        lock: bool
+        lock: bool,
+        account_id: str = ""
     ):
         """
         """
@@ -480,11 +491,11 @@ class CtaEngine(BaseEngine):
 
         if stop:
             if contract.stop_supported:
-                return self.send_server_stop_order(strategy, contract, direction, offset, price, volume, lock)
+                return self.send_server_stop_order(strategy, contract, direction, offset, price, volume, lock, account_id)
             else:
-                return self.send_local_stop_order(strategy, direction, offset, price, volume, lock)
+                return self.send_local_stop_order(strategy, direction, offset, price, volume, lock, account_id)
         else:
-            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock)
+            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock, account_id)
 
     def cancel_order(self, strategy: CtaTemplate, vt_orderid: str):
         """
@@ -668,9 +679,9 @@ class CtaEngine(BaseEngine):
         Start a strategy.
         """
         strategy = self.strategies[strategy_name]
-        if not strategy.inited:
-            self.write_log(f"策略{strategy.strategy_name}启动失败，请先初始化")
-            return
+        while not strategy.inited:
+            self.write_log(f"策略{strategy.strategy_name}仍在初始化，请等待")
+            time.sleep(1)
 
         if strategy.trading:
             self.write_log(f"{strategy_name}已经启动，请勿重复操作")

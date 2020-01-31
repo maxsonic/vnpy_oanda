@@ -120,6 +120,7 @@ class OrderData(BaseData):
     traded: float = 0
     status: Status = Status.SUBMITTING
     time: str = ""
+    account_id: str = ""
 
     def __post_init__(self):
         """"""
@@ -140,7 +141,7 @@ class OrderData(BaseData):
         Create cancel request object from order.
         """
         req = CancelRequest(
-            orderid=self.orderid, symbol=self.symbol, exchange=self.exchange
+            orderid=self.orderid, symbol=self.symbol, exchange=self.exchange, account_id=self.account_id
         )
         return req
 
@@ -157,6 +158,7 @@ class TradeData(BaseData):
     orderid: str
     tradeid: str
     direction: Direction = ""
+    accound_id: str = ""
 
     offset: Offset = Offset.NONE
     price: float = 0
@@ -179,6 +181,7 @@ class PositionData(BaseData):
     symbol: str
     exchange: Exchange
     direction: Direction
+    accound_id: str = ""
 
     volume: float = 0
     frozen: float = 0
@@ -275,6 +278,7 @@ class OrderRequest:
     """
 
     symbol: str
+    account_id: str
     exchange: Exchange
     direction: Direction
     type: OrderType
@@ -286,12 +290,13 @@ class OrderRequest:
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
 
-    def create_order_data(self, orderid: str, gateway_name: str):
+    def create_order_data(self, orderid: str, gateway_name: str, account_id: str = ""):
         """
         Create order data from request.
         """
         order = OrderData(
             symbol=self.symbol,
+            account_id=self.account_id,
             exchange=self.exchange,
             orderid=orderid,
             type=self.type,
@@ -312,6 +317,7 @@ class CancelRequest:
 
     orderid: str
     symbol: str
+    account_id: str
     exchange: Exchange
 
     def __post_init__(self):
