@@ -1,3 +1,5 @@
+修改了部分代码，让oanda可以跑起来。然后也修改了部分代码，让vnpy适应我的策略。
+
 # By Traders, For Traders.
 
 <p align="center">
