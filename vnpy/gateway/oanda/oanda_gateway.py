@@ -62,7 +62,6 @@ class OandaGateway(BaseGateway):
         server = setting["服务器"]
         proxy_host = setting["代理地址"]
         proxy_port = setting["代理端口"]
-        print("connect")
         if proxy_port.isdigit():
             proxy_port = int(proxy_port)
         else:
@@ -77,6 +76,7 @@ class OandaGateway(BaseGateway):
     def subscribe(self, req: SubscribeRequest):
         """"""
         assert self.account_id is not None, _("请先初始化并连接RestAPI")
+        self.write_log("oanda gateway going to subscribe")
         self.stream_api.subscribe(req)
 
     def send_order(self, req: OrderRequest):
@@ -178,7 +178,6 @@ class OandaGateway(BaseGateway):
         return super().write_log(msg)
 
     def parse_order_data(self, data, status: Status, time_key: str):
-        print(data)
         client_extension = data.get('clientExtensions', None)
         if client_extension is None:
             order_id = data['id']
@@ -200,7 +199,7 @@ class OandaGateway(BaseGateway):
             # status=STATUS_OANDA2VT[data['state']],
             status=status,
             time=parse_time(data[time_key]),
-            account_id=""
+            account_id=data["accountID"]
         )
         self.orders[order_id] = order
         return order
