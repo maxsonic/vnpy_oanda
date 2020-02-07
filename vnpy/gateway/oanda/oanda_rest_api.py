@@ -374,7 +374,6 @@ class OandaRestApi(OandaApiBase):
 
     def on_query_orders(self, raw_data: dict, request: "Request"):
         for data in raw_data['orders']:
-            print(data)
             order = self.gateway.parse_order_data(data,
                                                   STATUS_OANDA2VT[data['state']],
                                                   'createTime')
