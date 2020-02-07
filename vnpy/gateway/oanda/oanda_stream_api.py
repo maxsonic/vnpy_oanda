@@ -6,7 +6,7 @@ from functools import partial
 from http.client import IncompleteRead, RemoteDisconnected
 from typing import Callable, TYPE_CHECKING, Type
 from datetime import datetime, timedelta
-
+from threading import Thread
 from urllib3.exceptions import ProtocolError
 
 from vnpy.api.rest import Request
@@ -90,38 +90,40 @@ class OandaStreamApi(OandaApiBase):
 
     def subscribe(self, req: SubscribeRequest):
         # noinspection PyTypeChecker
+
         self.add_streaming_request(
             "GET",
             f"/v3/accounts/{self.gateway.account_id}/pricing/stream?instruments={req.symbol}",
             callback=self.on_price,
+            on_connected=partial(self._start_connection_checker, partial(self.subscribe, copy(req))),
             on_error=partial(self.on_streaming_error, partial(self.subscribe, copy(req))),
         )
-        self.after_subscribe = True
-        self.latest_stream_time = datetime.now()
-        if self.already_init_check == False:
+    
+    def _start_connection_checker(self, re_subscribe: Callable, request: Request):
+        if not self.already_init_check:
+            self.gateway.write_log("stream connection checker start in sub")
+            self.already_init_check = True
+            self.after_subscribe = True
+            self.latest_stream_time = datetime.now()
             th = Thread(
                 target=self.connection_checker,
-                args=[partial(self.subscribe, copy(req)),],
+                args=[re_subscribe,],
             )
             th.start()
-            self.already_init_check = True
 
     def connection_checker(self, re_subscribe: Callable):
-
         if self.after_subscribe:
-            self.write_log("stream connection checker start")
+            self.gateway.write_log("stream connection checker start")
             while True:
                 now = datetime.now()
                 delta = now - self.latest_stream_time 
-                self.write_log("stream connection checker delta is %s seconds" % delta)
-                if delta > timedelta(seconds=10):
-                    self.write_log("stream connection checker reconnected due to %ss" % delta)
+                # self.gateway.write_log("stream connection checker delta is %s seconds" % delta)
+                if delta > timedelta(seconds=20):
+                    self.gateway.write_log("stream connection checker reconnected due to %ss" % delta)
                     re_subscribe()
                 time.sleep(1)
 
     def on_price(self, data: dict, request: Request):
-
-        self.latest_stream_time = datetime.now()
         type_ = data['type']
         if type_ == 'PRICE':
             symbol = data['instrument']
@@ -141,6 +143,7 @@ class OandaStreamApi(OandaApiBase):
                 ask_volume_1=ask['liquidity'],
             )
             self.gateway.on_tick(tick)
+        self.latest_stream_time = datetime.now()
 
     def has_error(self, target_type: Type[Exception], e: Exception):
         """check if error type \a target_error exists inside \a e"""
@@ -160,7 +163,7 @@ class OandaStreamApi(OandaApiBase):
                            ):
         """normally triggered by network error."""
         # skip known errors
-        self.gateway.write_log("ERROORRRRRR, connection error")
+        self.gateway.write_log("ERRRRRROOOOOORRRRR")
         known = False
         for et in (ProtocolError, IncompleteRead, RemoteDisconnected,):
             if self.has_error(et, exception_value):
