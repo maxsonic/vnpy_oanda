@@ -53,6 +53,7 @@ class OandaStreamApi(OandaApiBase):
 
         self.fully_initialized = False
         self.latest_stream_time = datetime.now()
+        self.trans_latest_stream_time = datetime.now()
         self.after_subscribe = False
         self.already_init_check = False
 
@@ -90,7 +91,6 @@ class OandaStreamApi(OandaApiBase):
 
     def subscribe(self, req: SubscribeRequest):
         # noinspection PyTypeChecker
-
         self.add_streaming_request(
             "GET",
             f"/v3/accounts/{self.gateway.account_id}/pricing/stream?instruments={req.symbol}",
@@ -121,7 +121,13 @@ class OandaStreamApi(OandaApiBase):
                 if delta > timedelta(seconds=20):
                     self.gateway.write_log("stream connection checker reconnected due to %ss" % delta)
                     re_subscribe()
+
                 time.sleep(1)
+
+                delta = now - self.trans_latest_stream_time 
+                if delta > timedelta(seconds=20):
+                    self.gateway.write_log("transaction stream connection checker reconnected due to %ss" % delta)
+                    self.subscribe_transaction()
 
     def on_price(self, data: dict, request: Request):
         type_ = data['type']
@@ -189,6 +195,7 @@ class OandaStreamApi(OandaApiBase):
 
     def on_subscribed_transaction(self, request: "Request"):
         self.fully_initialized = True
+        self.trans_latest_stream_time = datetime.now()
 
     def on_transaction(self, data: dict, request: "Request"):
         type_ = data['type']
@@ -197,6 +204,8 @@ class OandaStreamApi(OandaApiBase):
             callback(data, request)
         elif type_ != "HEARTBEAT":
             print(type_)
+
+        self.trans_latest_stream_time = datetime.now()
 
     def on_order(self, data: dict, request: "Request"):
         order = self.gateway.parse_order_data(data,

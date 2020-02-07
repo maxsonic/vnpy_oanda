@@ -186,6 +186,7 @@ class OandaGateway(BaseGateway):
         vol = int(data['units'])
         type_ = ORDER_TYPE_OANDA2VT[data['type']]
 
+        account_id=data.get("accountID")
         order = OrderData(
             gateway_name=self.gateway_name,
             symbol=data['instrument'],
@@ -199,7 +200,7 @@ class OandaGateway(BaseGateway):
             # status=STATUS_OANDA2VT[data['state']],
             status=status,
             time=parse_time(data[time_key]),
-            account_id=data["accountID"]
+            account_id="" if account_id is None else account_id
         )
         self.orders[order_id] = order
         return order

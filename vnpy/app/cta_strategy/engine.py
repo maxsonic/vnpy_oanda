@@ -268,7 +268,7 @@ class CtaEngine(BaseEngine):
                     price,
                     stop_order.volume,
                     stop_order.lock,
-                    stop_order.account_id
+                    account_id=stop_order.account_id
                 )
 
                 # Update stop order status if placed successfully
@@ -363,7 +363,7 @@ class CtaEngine(BaseEngine):
             volume,
             OrderType.LIMIT,
             lock,
-            account_id
+            account_id=account_id
         )
 
     def send_server_stop_order(
@@ -392,7 +392,7 @@ class CtaEngine(BaseEngine):
             volume,
             OrderType.STOP,
             lock,
-            account_id
+            account_id=account_id
         )
 
     def send_local_stop_order(
@@ -441,7 +441,6 @@ class CtaEngine(BaseEngine):
         if not order:
             self.write_log(f"撤单失败，找不到委托{vt_orderid}", strategy)
             return
-
         req = order.create_cancel_request()
         self.main_engine.cancel_order(req, order.gateway_name)
 
@@ -495,7 +494,7 @@ class CtaEngine(BaseEngine):
             else:
                 return self.send_local_stop_order(strategy, direction, offset, price, volume, lock, account_id)
         else:
-            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock, account_id)
+            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock, account_id=account_id)
 
     def cancel_order(self, strategy: CtaTemplate, vt_orderid: str):
         """
@@ -659,13 +658,16 @@ class CtaEngine(BaseEngine):
                 value = data.get(name, None)
                 if value:
                     setattr(strategy, name, value)
+        setting = self.strategy_setting.get(strategy_name, None)
+        setting = setting.get("setting", "")
+        account_id = setting.get("account_id", "")
 
         # Subscribe market data
         contract = self.main_engine.get_contract(strategy.vt_symbol)
         if contract:
             req = SubscribeRequest(
                 symbol=contract.symbol, exchange=contract.exchange)
-            self.main_engine.subscribe(req, contract.gateway_name)
+            self.main_engine.subscribe(req, contract.gateway_name, account_id=account_id)
         else:
             self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
 
@@ -681,7 +683,7 @@ class CtaEngine(BaseEngine):
         strategy = self.strategies[strategy_name]
         while not strategy.inited:
             self.write_log(f"策略{strategy.strategy_name}仍在初始化，请等待")
-            time.sleep(1)
+            time.sleep(5)
 
         if strategy.trading:
             self.write_log(f"{strategy_name}已经启动，请勿重复操作")
@@ -860,7 +862,6 @@ class CtaEngine(BaseEngine):
         Load setting file.
         """
         self.strategy_setting = load_json(self.setting_filename)
-        print(self.strategy_setting)
 
         for strategy_name, strategy_config in self.strategy_setting.items():
             self.add_strategy(

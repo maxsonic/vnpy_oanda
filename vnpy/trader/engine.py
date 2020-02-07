@@ -156,12 +156,13 @@ class MainEngine:
         if gateway:
             gateway.connect(setting)
 
-    def subscribe(self, req: SubscribeRequest, gateway_name: str):
+    def subscribe(self, req: SubscribeRequest, gateway_name: str, account_id: str=""):
         """
         Subscribe tick data update of a specific gateway.
         """
         gateway = self.get_gateway(gateway_name)
         if gateway:
+            gateway.account_id = account_id
             gateway.subscribe(req)
 
     def send_order(self, req: OrderRequest, gateway_name: str):

@@ -390,14 +390,19 @@ class OandaRestApi(OandaApiBase):
         """
         {"accounts":[{"id":"101-001-12185735-001","tags":[]}]}
         """
-        for acc in raw_data['accounts']:
-            account_id: str = acc['id']
-            self.gateway.account_id = account_id
+        if not self.gateway.account_id:
+            for acc in raw_data['accounts']:
+                account_id: str = acc['id']
+                self.gateway.account_id = account_id
 
+                self.query_account(account_id)
+                self.query_contracts(account_id)
+                # self.query_orders()
+                # self.query_positions()
+
+        if self.gateway.account_id:
             self.query_account(account_id)
             self.query_contracts(account_id)
-            self.query_orders()
-            # self.query_positions()
 
     def query_account(self, account_id: str):
         self.add_request("GET",
