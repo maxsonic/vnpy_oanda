@@ -91,6 +91,7 @@ class OandaStreamApi(OandaApiBase):
 
     def subscribe(self, req: SubscribeRequest):
         # noinspection PyTypeChecker
+        self.subscribe_transaction()
         self.add_streaming_request(
             "GET",
             f"/v3/accounts/{self.gateway.account_id}/pricing/stream?instruments={req.symbol}",

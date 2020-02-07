@@ -399,7 +399,6 @@ class OandaRestApi(OandaApiBase):
                 self.query_contracts(account_id)
                 # self.query_orders()
                 # self.query_positions()
-
         if self.gateway.account_id:
             self.query_account(account_id)
             self.query_contracts(account_id)
@@ -430,7 +429,7 @@ class OandaRestApi(OandaApiBase):
         for trade in acc['trades']:
             pass
         self.last_account_transaction_id = acc['lastTransactionID']
-        self.gateway.stream_api.subscribe_transaction()
+        # self.gateway.stream_api.subscribe_transaction()
         self.account_initialized = True
 
     @property
