@@ -1,6 +1,5 @@
 import time
 
-from threading import RLock
 from copy import copy
 from dataclasses import dataclass
 from functools import partial
@@ -52,7 +51,6 @@ class OandaStreamApi(OandaApiBase):
         """"""
         super().__init__(gateway)
 
-        self.lock = RLock()
         self.fully_initialized = False
         self.latest_stream_time = dict()
         self.trans_latest_stream_time = dict()
@@ -107,9 +105,7 @@ class OandaStreamApi(OandaApiBase):
             self.already_init_check = True
             self.after_subscribe = True
             
-            self.lock.acquire()
             self.latest_stream_time[req.symbol] = datetime.now()
-            self.lock.release()
             th = Thread(
                 target=self.connection_checker,
                 args=[re_subscribe, req,],
@@ -164,9 +160,7 @@ class OandaStreamApi(OandaApiBase):
                 ask_volume_1=ask['liquidity'],
             )
             self.gateway.on_tick(tick)
-            self.lock.acquire()
             self.latest_stream_time[symbol] = datetime.now()
-            self.lock.release()
 
     def has_error(self, target_type: Type[Exception], e: Exception):
         """check if error type \a target_error exists inside \a e"""
@@ -213,9 +207,7 @@ class OandaStreamApi(OandaApiBase):
 
     def on_subscribed_transaction(self, request: "Request"):
         self.fully_initialized = True
-        self.lock.acquire()
         self.trans_latest_stream_time[self.gateway.account_id] = datetime.now()
-        self.lock.release()
 
     def on_transaction(self, data: dict, request: "Request"):
         type_ = data['type']
@@ -225,9 +217,7 @@ class OandaStreamApi(OandaApiBase):
         elif type_ != "HEARTBEAT":
             print(type_)
 
-        self.lock.acquire()
         self.trans_latest_stream_time[self.gateway.account_id] = datetime.now()
-        self.lock.release()
 
     def on_order(self, data: dict, request: "Request"):
         order = self.gateway.parse_order_data(data,
