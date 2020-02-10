@@ -91,10 +91,14 @@ class OandaStreamApi(OandaApiBase):
 
     def subscribe(self, req: SubscribeRequest):
         # noinspection PyTypeChecker
+        def _on_price(symbol):
+            def __on_price(data: dict, request: Request):
+                self.on_price(symbol, data, request)
+            return __on_price
         self.add_streaming_request(
             "GET",
             f"/v3/accounts/{self.gateway.account_id}/pricing/stream?instruments={req.symbol}",
-            callback=self.on_price,
+            callback=_on_price(req.symbol),
             on_connected=partial(self._start_connection_checker, partial(self.subscribe, copy(req)), copy(req)),
             on_error=partial(self.on_streaming_error, partial(self.subscribe, copy(req))),
         )
@@ -127,7 +131,7 @@ class OandaStreamApi(OandaApiBase):
                 delta = now - latest
 
                 # self.gateway.write_log("stream connection checker delta is %s seconds" % delta)
-                if delta > timedelta(seconds=20):
+                if delta > timedelta(seconds=10):
                     self.gateway.write_log("stream connection checker reconnected due to %ss" % delta)
                     re_subscribe()
 
@@ -140,7 +144,7 @@ class OandaStreamApi(OandaApiBase):
                     self.gateway.write_log("transaction stream connection checker reconnected due to %ss" % delta)
                     self.subscribe_transaction()
 
-    def on_price(self, data: dict, request: Request):
+    def on_price(self, symbol: str, data: dict, request: Request):
         type_ = data['type']
         if type_ == 'PRICE':
             symbol = data['instrument']
@@ -160,7 +164,7 @@ class OandaStreamApi(OandaApiBase):
                 ask_volume_1=ask['liquidity'],
             )
             self.gateway.on_tick(tick)
-            self.latest_stream_time[symbol] = datetime.now()
+        self.latest_stream_time[symbol] = datetime.now()
 
     def has_error(self, target_type: Type[Exception], e: Exception):
         """check if error type \a target_error exists inside \a e"""
