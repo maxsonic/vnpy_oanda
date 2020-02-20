@@ -190,7 +190,8 @@ class OandaRestApi(OandaApiBase):
         for data in result:
             bar_data = data['mid']
             open_time = parse_datetime(data["time"])
-            close_time = open_time + adjustment
+            # close_time = open_time + adjustment
+            close_time = open_time
             bar = BarData(
                 symbol=symbol,
                 exchange=Exchange.OANDA,
