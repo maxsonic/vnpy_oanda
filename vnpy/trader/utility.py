@@ -319,6 +319,8 @@ class ArrayManager(object):
         self.high_array = np.zeros(size)
         self.low_array = np.zeros(size)
         self.close_array = np.zeros(size)
+        self.close_ask_array = np.zeros(size)
+        self.close_bid_array = np.zeros(size)
         self.volume_array = np.zeros(size)
 
     def update_bar(self, bar):
@@ -333,12 +335,16 @@ class ArrayManager(object):
         self.high_array[:-1] = self.high_array[1:]
         self.low_array[:-1] = self.low_array[1:]
         self.close_array[:-1] = self.close_array[1:]
+        self.close_ask_array[:-1] = self.close_ask_array[1:]
+        self.close_bid_array[:-1] = self.close_bid_array[1:]
         self.volume_array[:-1] = self.volume_array[1:]
 
         self.open_array[-1] = bar.open_price
         self.high_array[-1] = bar.high_price
         self.low_array[-1] = bar.low_price
         self.close_array[-1] = bar.close_price
+        self.close_bid_array[-1] = bar.close_bid_price
+        self.close_ask_array[-1] = bar.close_ask_price
         self.volume_array[-1] = bar.volume
 
     @property
@@ -368,6 +374,14 @@ class ArrayManager(object):
         Get close price time series.
         """
         return self.close_array
+
+    @property
+    def close_ask(self):
+        return self.close_ask_array
+
+    @property
+    def close_bid(self):
+        return self.close_bid_array
 
     @property
     def volume(self):
@@ -1092,6 +1106,11 @@ class ArrayManager(object):
         real = talib.VAR(self.close, timeperiod=n, nbdev=1)
         return real[-1]
     
+    def askbidspread(self, n, array=False):
+        return self.close_ask[-1] - self.close_bid[-1]
+
+    def askbidratio(self, n, array=False):
+        return self.close_ask[-1] / self.close_bid[-1]
 
 
 def virtual(func: "callable"):
