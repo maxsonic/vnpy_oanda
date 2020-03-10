@@ -8,6 +8,7 @@ from typing import Callable, TYPE_CHECKING, Type
 from datetime import datetime, timedelta
 from threading import Thread
 from urllib3.exceptions import ProtocolError
+from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from vnpy.api.rest import Request
 from vnpy.trader.constant import Exchange, Interval, Offset, Status
@@ -131,7 +132,7 @@ class OandaStreamApi(OandaApiBase):
                 delta = now - latest
 
                 # self.gateway.write_log("stream connection checker delta is %s seconds" % delta)
-                if delta > timedelta(seconds=10):
+                if delta > timedelta(seconds=30):
                     self.gateway.write_log("stream connection checker reconnected due to %ss" % delta)
                     re_subscribe()
 
@@ -140,7 +141,7 @@ class OandaStreamApi(OandaApiBase):
                 latest = self.trans_latest_stream_time.get(self.gateway.account_id)
                 latest = latest if latest is not None else datetime.now()
                 delta = now - latest
-                if delta > timedelta(seconds=10):
+                if delta > timedelta(seconds=30):
                     self.gateway.write_log("transaction stream connection checker reconnected due to %ss" % delta)
                     self.subscribe_transaction()
 
@@ -186,8 +187,9 @@ class OandaStreamApi(OandaApiBase):
         # skip known errors
         self.gateway.write_log("ERRRRRROOOOOORRRRR")
         known = False
-        for et in (ProtocolError, IncompleteRead, RemoteDisconnected,):
+        for et in (ProtocolError, IncompleteRead, RemoteDisconnected, ConnectTimeout, ReadTimeout,):
             if self.has_error(et, exception_value):
+                self.gateway.write_log("Know ERR")
                 known = True
                 break
 
@@ -196,6 +198,7 @@ class OandaStreamApi(OandaApiBase):
             re_subscribe()
         # write log for any unknown errors
         else:
+            self.gateway.write_log("UNKnow ERR")
             super().on_error(exception_type, exception_value, tb, request)
 
     def subscribe_transaction(self):

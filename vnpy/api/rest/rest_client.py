@@ -392,6 +392,9 @@ class RestClient(object):
                 self._log("[%s] sending request %s %s, headers:%s, params:%s, data:%s",
                           uid, method, url,
                           headers, params, data)
+                timeout = 2
+                if stream:
+                    timeout = 10
                 response = session.request(
                     method,
                     url,
@@ -400,6 +403,7 @@ class RestClient(object):
                     data=data,
                     proxies=self.proxies,
                     stream=stream,
+                    timeout=timeout
                 )
                 request.response = response
                 status_code = response.status_code
