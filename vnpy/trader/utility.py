@@ -12,6 +12,7 @@ from math import floor, ceil
 
 import numpy as np
 import talib
+import datetime
 
 from .object import BarData, TickData
 from .constant import Exchange, Interval
@@ -178,6 +179,7 @@ class BarGenerator:
 
         self.last_tick = None
         self.last_bar = None
+        self.last_generated_time = None
 
     def update_tick(self, tick: TickData):
         """
@@ -233,6 +235,42 @@ class BarGenerator:
         """
         Update 1 minute bar into generator
         """
+        if self.window_bar is not None:
+            # Reason to compare the datetime here is for an exception
+            # If the last generated bar was end at 09:59, and the
+            # next start time is 11:00, then the window_bar will have
+            # be the first bar and the last_generated_time will be 09:59
+            # a new bar will be genereted with only one minute bar
+            # since we have delta > 1hour.
+            if bar.datetime.hour == self.window_bar.datetime.hour:
+                self.last_generated_time = self.window_bar.datetime
+
+        if self.interval == Interval.MINUTE and self.last_generated_time is not None:
+            larger_delta = bar.datetime - self.last_generated_time >= datetime.timedelta(minutes=self.window)
+            if larger_delta and self.window_bar is not None:
+                self.on_window_bar(self.window_bar)
+                self.window_bar = None
+                self.last_generated_time = bar.datetime
+
+        elif self.interval == Interval.HOUR and self.last_generated_time is not None:
+            if self.last_bar and bar.datetime.hour != self.last_bar.datetime.hour and self.window_bar is not None:
+                # 1-hour bar
+                hour_finished = False
+                if self.window == 1:
+                    hour_finished = True
+                    self.last_generated_time = bar.datetime
+                # x-hour bar
+                else:
+                    self.interval_count += 1
+
+                    if not self.interval_count % self.window:
+                        hour_finished = True
+                        self.last_generated_time = bar.datetime
+                        self.interval_count = 0
+                if hour_finished:
+                    self.on_window_bar(self.window_bar)
+                    self.window_bar = None
+
         # If not inited, creaate window bar object
         if not self.window_bar:
             # Generate timestamp for bar data
@@ -271,22 +309,12 @@ class BarGenerator:
             # x-minute bar
             if not (bar.datetime.minute + 1) % self.window:
                 finished = True
-        elif self.interval == Interval.HOUR:
-            if self.last_bar and bar.datetime.hour != self.last_bar.datetime.hour:
-                # 1-hour bar
-                if self.window == 1:
-                    finished = True
-                # x-hour bar
-                else:
-                    self.interval_count += 1
-
-                    if not self.interval_count % self.window:
-                        finished = True
-                        self.interval_count = 0
+                
 
         if finished:
             self.on_window_bar(self.window_bar)
             self.window_bar = None
+            self.last_generated_time = bar.datetime
 
         # Cache last bar object
         self.last_bar = bar
