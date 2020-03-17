@@ -244,10 +244,19 @@ class BarGenerator:
             # since we have delta > 1hour.
             if bar.datetime.hour == self.window_bar.datetime.hour:
                 self.last_generated_time = self.window_bar.datetime
+                # If the case like, you have a 30 minute window
+                # and the last generated time is 4:05, we shall align
+                # the last generated time to 4:00, otherwise, it will introduce a bug.
+                # Because the next bar will be generated when 4:35 comes.
+                # So we need to algin it to 4:00
+                if self.last_generated_time.minute % self.window:
+                    past_window_count_in_hour = int(self.last_generated_time.minute / self.window)
+                    self.last_generated_time = self.last_generated_time.replace(minute=self.window * past_window_count_in_hour)
 
         if self.interval == Interval.MINUTE and self.last_generated_time is not None:
             larger_delta = bar.datetime - self.last_generated_time >= datetime.timedelta(minutes=self.window)
             if larger_delta and self.window_bar is not None:
+                self.window_bar.datetime = self.last_generated_time
                 self.on_window_bar(self.window_bar)
                 self.window_bar = None
                 self.last_generated_time = bar.datetime

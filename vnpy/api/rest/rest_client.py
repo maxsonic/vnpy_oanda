@@ -429,7 +429,7 @@ class RestClient(object):
                     if request.on_connected:
                         request.on_connected(request)
                     # split response by lines, and call one callback for each line.
-                    for line in response.iter_lines(chunk_size=None):
+                    for line in response.iter_lines(chunk_size=60):
                         if line:
                             request.processing_line = line
                             json_body = json.loads(line)

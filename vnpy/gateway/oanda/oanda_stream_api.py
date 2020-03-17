@@ -102,6 +102,7 @@ class OandaStreamApi(OandaApiBase):
             callback=_on_price(req.symbol),
             on_connected=partial(self._start_connection_checker, partial(self.subscribe, copy(req)), copy(req)),
             on_error=partial(self.on_streaming_error, partial(self.subscribe, copy(req))),
+            headers={"Accept-Encoding":"gzip, deflate"},
         )
     
     def _start_connection_checker(self, re_subscribe: Callable, req: SubscribeRequest, request: Request):
@@ -132,7 +133,7 @@ class OandaStreamApi(OandaApiBase):
                 delta = now - latest
 
                 # self.gateway.write_log("stream connection checker delta is %s seconds" % delta)
-                if delta > timedelta(seconds=30):
+                if delta > timedelta(seconds=10):
                     self.gateway.write_log("stream connection checker reconnected due to %ss" % delta)
                     re_subscribe()
 
@@ -198,6 +199,7 @@ class OandaStreamApi(OandaApiBase):
             re_subscribe()
         # write log for any unknown errors
         else:
+            re_subscribe()
             self.gateway.write_log("UNKnow ERR")
             super().on_error(exception_type, exception_value, tb, request)
 
@@ -210,6 +212,7 @@ class OandaStreamApi(OandaApiBase):
             callback=self.on_transaction,
             on_connected=self.on_subscribed_transaction,
             on_error=partial(self.on_streaming_error, partial(self.subscribe_transaction, )),
+            headers={"Accept-Encoding":"gzip, deflate"},
         )
 
     def on_subscribed_transaction(self, request: "Request"):
