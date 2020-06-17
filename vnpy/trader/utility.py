@@ -202,13 +202,18 @@ class BarGenerator:
             new_minute = True
 
         if new_minute:
+            if self.last_bar is None:
+                open_price = tick.last_price
+            else:
+                open_price = self.last_bar.close_price
+
             self.bar = BarData(
                 symbol=tick.symbol,
                 exchange=tick.exchange,
                 interval=Interval.MINUTE,
                 datetime=tick.datetime,
                 gateway_name=tick.gateway_name,
-                open_price=tick.last_price,
+                open_price=open_price,
                 high_price=tick.last_price,
                 low_price=tick.last_price,
                 close_price=tick.last_price,
