@@ -155,13 +155,14 @@ class OandaStreamApi(OandaApiBase):
             ask = data['asks'][0]
             float_point = len(bid['price'].split(".")[1])
             round_add = 1.0 / float_point * 10 * 5
+            print("bid volume, ask volume" %s (bid['liquidity'], ask['liquidity']))
             tick = TickData(
                 gateway_name=self.gateway_name,
                 symbol=symbol,
                 exchange=Exchange.OANDA,
                 datetime=parse_datetime(data['time']),
                 name=symbol,
-                last_price=round((float(bid['price'])+float(ask['price']) + round_add) / 2),
+                last_price=round((float(bid['price'])+float(ask['price']) + round_add, float_point) / 2),
                 bid_price_1=float(bid['price']),
                 bid_volume_1=bid['liquidity'],
                 ask_price_1=float(ask['price']),
